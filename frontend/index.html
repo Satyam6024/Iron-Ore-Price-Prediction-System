@@ -1,0 +1,267 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iron Ore Predictor</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f2f7ff 0%, #e8efff 100%);
+      color: #10213f;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+    .subtitle {
+      margin-top: 8px;
+      color: #355;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(13, 52, 92, 0.10);
+      padding: 18px;
+      margin-top: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #234;
+    }
+    input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #c4d4e8;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fbfdff;
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: Consolas, monospace;
+    }
+    .actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .primary {
+      background: #005fcc;
+      color: #fff;
+    }
+    .secondary {
+      background: #e8f0ff;
+      color: #123;
+    }
+    .hint {
+      font-size: 13px;
+      color: #345;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+    .result {
+      margin-top: 12px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #003f8a;
+    }
+    .error {
+      color: #8f1021;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Iron Ore Price Predictor</h1>
+    <div class="subtitle">Simple input mode: enter market values + recent price history</div>
+
+    <div class="card">
+      <label for="apiBase">Backend API Base URL</label>
+      <input id="apiBase" value="http://localhost:8000">
+      <div class="actions">
+        <button class="secondary" id="schemaBtn">Load Simple Schema</button>
+        <button class="secondary" id="sampleBtn">Fill Sample Values</button>
+      </div>
+      <div class="hint" id="schemaInfo">Click "Load Simple Schema" to fetch required history length.</div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <div>
+          <label for="date">Date (YYYY-MM-DD)</label>
+          <input id="date" type="date" value="2023-12-29">
+        </div>
+        <div>
+          <label for="open">Open</label>
+          <input id="open" type="number" step="any" value="136.37">
+        </div>
+        <div>
+          <label for="high">High</label>
+          <input id="high" type="number" step="any" value="136.37">
+        </div>
+        <div>
+          <label for="low">Low</label>
+          <input id="low" type="number" step="any" value="136.37">
+        </div>
+        <div>
+          <label for="volume">Volume</label>
+          <input id="volume" type="number" step="any" value="0">
+        </div>
+        <div>
+          <label for="changePct">Change % (no % sign)</label>
+          <input id="changePct" type="number" step="any" value="0.15">
+        </div>
+      </div>
+
+      <label for="history" style="margin-top:12px;">Price History (comma-separated, oldest -> latest)</label>
+      <textarea id="history">129.25,129.52,129.85,130.02,129.74,130.12,130.38,130.01,129.88,130.44,131.1,131.45,131.9,132.35,132.8,133.1,133.6,134.0,134.25,134.61,134.9,135.12,135.45,135.0,135.31,135.75,136.07,136.16,136.37,136.37</textarea>
+
+      <div class="actions">
+        <button class="primary" id="predictBtn">Predict</button>
+        <button class="secondary" id="clearBtn">Clear</button>
+      </div>
+
+      <div class="hint" id="requestInfo"></div>
+      <div class="result" id="result"></div>
+      <div class="error" id="error"></div>
+    </div>
+  </div>
+
+  <script>
+    const el = {
+      apiBase: document.getElementById('apiBase'),
+      schemaBtn: document.getElementById('schemaBtn'),
+      sampleBtn: document.getElementById('sampleBtn'),
+      schemaInfo: document.getElementById('schemaInfo'),
+      date: document.getElementById('date'),
+      open: document.getElementById('open'),
+      high: document.getElementById('high'),
+      low: document.getElementById('low'),
+      volume: document.getElementById('volume'),
+      changePct: document.getElementById('changePct'),
+      history: document.getElementById('history'),
+      predictBtn: document.getElementById('predictBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      requestInfo: document.getElementById('requestInfo'),
+      result: document.getElementById('result'),
+      error: document.getElementById('error')
+    };
+
+    function apiBase() {
+      return el.apiBase.value.trim().replace(/\/+$/, '');
+    }
+
+    function parseHistory(text) {
+      return text
+        .split(',')
+        .map(x => x.trim())
+        .filter(Boolean)
+        .map(Number)
+        .filter(v => !Number.isNaN(v));
+    }
+
+    async function loadSchema() {
+      el.schemaInfo.textContent = 'Loading...';
+      try {
+        const res = await fetch(`${apiBase()}/metadata/simple`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(JSON.stringify(data));
+
+        el.schemaInfo.textContent = `Simple schema loaded. Minimum price_history length: ${data.minimum_price_history_length}.\nModel feature count: ${data.model_feature_count}.`;
+      } catch (err) {
+        el.schemaInfo.textContent = `Error: ${err.message}`;
+      }
+    }
+
+    function fillSample() {
+      el.date.value = '2023-12-29';
+      el.open.value = '136.37';
+      el.high.value = '136.37';
+      el.low.value = '136.37';
+      el.volume.value = '0';
+      el.changePct.value = '0.15';
+      el.history.value = '129.25,129.52,129.85,130.02,129.74,130.12,130.38,130.01,129.88,130.44,131.1,131.45,131.9,132.35,132.8,133.1,133.6,134.0,134.25,134.61,134.9,135.12,135.45,135.0,135.31,135.75,136.07,136.16,136.37,136.37';
+      el.requestInfo.textContent = 'Sample values filled.';
+      el.error.textContent = '';
+      el.result.textContent = '';
+    }
+
+    async function predict() {
+      el.error.textContent = '';
+      el.result.textContent = '';
+
+      const history = parseHistory(el.history.value);
+      const payload = {
+        date: el.date.value,
+        open: Number(el.open.value),
+        high: Number(el.high.value),
+        low: Number(el.low.value),
+        volume: Number(el.volume.value),
+        change_pct: Number(el.changePct.value),
+        price_history: history
+      };
+
+      el.requestInfo.textContent = `Sending simple payload with ${history.length} history values...`;
+
+      try {
+        const res = await fetch(`${apiBase()}/predict/simple`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(JSON.stringify(data));
+
+        el.result.textContent = `Predicted Price: ${Number(data.prediction).toFixed(6)}`;
+        el.requestInfo.textContent = 'Prediction successful.';
+      } catch (err) {
+        el.error.textContent = `Prediction failed:\n${err.message}`;
+      }
+    }
+
+    function clearForm() {
+      el.date.value = '';
+      el.open.value = '';
+      el.high.value = '';
+      el.low.value = '';
+      el.volume.value = '';
+      el.changePct.value = '';
+      el.history.value = '';
+      el.result.textContent = '';
+      el.error.textContent = '';
+      el.requestInfo.textContent = 'Cleared.';
+    }
+
+    el.schemaBtn.addEventListener('click', loadSchema);
+    el.sampleBtn.addEventListener('click', fillSample);
+    el.predictBtn.addEventListener('click', predict);
+    el.clearBtn.addEventListener('click', clearForm);
+  </script>
+</body>
+</html>

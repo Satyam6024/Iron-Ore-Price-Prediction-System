@@ -1,0 +1,378 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python dvc_pipeline/src/data_ingestion.py
+    deps:
+    - path: PYTHON_EDA_PREPROCESS_IRON_ORE/Data_set_Iron.csv
+      hash: md5
+      md5: b6d56370e2ec86f464a30b8da3cfa9ad
+      size: 133964
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/data_ingestion.py
+      hash: md5
+      md5: 7562b4afc1262cc68f4702af51d67b57
+      size: 1002
+    params:
+      params.yaml:
+        data_ingestion:
+          raw_data_path: PYTHON_EDA_PREPROCESS_IRON_ORE/Data_set_Iron.csv
+          output_path: dvc_pipeline/data/raw/iron_ore_raw.csv
+          report_path: dvc_pipeline/reports/ingestion_report.json
+    outs:
+    - path: dvc_pipeline/data/raw/iron_ore_raw.csv
+      hash: md5
+      md5: 72dcc5931f5f4c19afb251afdfed551e
+      size: 103636
+    - path: dvc_pipeline/reports/ingestion_report.json
+      hash: md5
+      md5: 11c91e8e14f2b29598a0139f04fd153a
+      size: 171
+  data_cleaning:
+    cmd: python dvc_pipeline/src/data_cleaning.py
+    deps:
+    - path: dvc_pipeline/data/raw/iron_ore_raw.csv
+      hash: md5
+      md5: 72dcc5931f5f4c19afb251afdfed551e
+      size: 103636
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/data_cleaning.py
+      hash: md5
+      md5: e8c7da628ae3dcdaa6d39e1284bb4470
+      size: 2665
+    params:
+      params.yaml:
+        data_cleaning:
+          input_path: dvc_pipeline/data/raw/iron_ore_raw.csv
+          output_path: dvc_pipeline/data/processed/iron_ore_clean.csv
+          report_path: dvc_pipeline/reports/cleaning_report.json
+          keep_weekdays_only: true
+    outs:
+    - path: dvc_pipeline/data/processed/iron_ore_clean.csv
+      hash: md5
+      md5: ef624fdf41920538c30901cff1e4c17e
+      size: 106604
+    - path: dvc_pipeline/reports/cleaning_report.json
+      hash: md5
+      md5: 576bccb4c1b8f2843dca0c14fe0db84d
+      size: 236
+  feature_engineering:
+    cmd: python dvc_pipeline/src/feature_engineering.py
+    deps:
+    - path: dvc_pipeline/data/processed/iron_ore_clean.csv
+      hash: md5
+      md5: ef624fdf41920538c30901cff1e4c17e
+      size: 106604
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/feature_engineering.py
+      hash: md5
+      md5: 931ff7d530dfd82ed8014a79cb720e28
+      size: 3179
+    params:
+      params.yaml:
+        feature_engineering:
+          input_path: dvc_pipeline/data/processed/iron_ore_clean.csv
+          output_path: dvc_pipeline/data/features/feature_dataset.csv
+          train_output_path: dvc_pipeline/data/features/train.csv
+          test_output_path: dvc_pipeline/data/features/test.csv
+          feature_columns_path: dvc_pipeline/data/features/feature_columns.json
+          report_path: dvc_pipeline/reports/feature_report.json
+          date_column: Date
+          target_column: Price
+          lags:
+          - 1
+          - 2
+          - 3
+          - 5
+          - 7
+          - 14
+          - 21
+          - 30
+          rolling_windows:
+          - 7
+          - 14
+          - 30
+        training.test_size: 252
+    outs:
+    - path: dvc_pipeline/data/features/feature_columns.json
+      hash: md5
+      md5: 0bc4fa994aa28ab96578de9e78933288
+      size: 703
+    - path: dvc_pipeline/data/features/feature_dataset.csv
+      hash: md5
+      md5: e385a1af23e551a76625abff93717d94
+      size: 772860
+    - path: dvc_pipeline/data/features/test.csv
+      hash: md5
+      md5: 881213020fee3d07a0d5ce6ebeac07df
+      size: 89685
+    - path: dvc_pipeline/data/features/train.csv
+      hash: md5
+      md5: 556384cefa7f28bc66326c90bbb47836
+      size: 683665
+    - path: dvc_pipeline/reports/feature_report.json
+      hash: md5
+      md5: dff69f3bab459a3161e7a2fd4b0b0d39
+      size: 309
+  training:
+    cmd: python dvc_pipeline/src/train_model.py
+    deps:
+    - path: dvc_pipeline/data/features/feature_dataset.csv
+      hash: md5
+      md5: e385a1af23e551a76625abff93717d94
+      size: 772860
+    - path: dvc_pipeline/data/features/selected_feature_columns.json
+      hash: md5
+      md5: b87779934951259a29444b7da9151ee4
+      size: 238
+    - path: dvc_pipeline/data/features/test.csv
+      hash: md5
+      md5: 881213020fee3d07a0d5ce6ebeac07df
+      size: 89685
+    - path: dvc_pipeline/data/features/train.csv
+      hash: md5
+      md5: 556384cefa7f28bc66326c90bbb47836
+      size: 683665
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/train_model.py
+      hash: md5
+      md5: d6258999edb35a5045aeb69be4db7ad7
+      size: 7224
+    params:
+      params.yaml:
+        training:
+          train_data_path: dvc_pipeline/data/features/train.csv
+          test_data_path: dvc_pipeline/data/features/test.csv
+          full_data_path: dvc_pipeline/data/features/feature_dataset.csv
+          feature_columns_path: 
+            dvc_pipeline/data/features/selected_feature_columns.json
+          date_column: Date
+          target_column: Price
+          test_size: 252
+          model_name: ridge
+          random_state: 42
+          cv_splits: 5
+          n_iter: 30
+          n_jobs: -1
+          fixed_params:
+            model__alpha: 0.2196385372416547
+          output_model_path: dvc_pipeline/models/final_model.joblib
+          metrics_path: dvc_pipeline/reports/training_metrics.json
+          predictions_path: dvc_pipeline/reports/test_predictions.csv
+    outs:
+    - path: dvc_pipeline/models/final_model.joblib
+      hash: md5
+      md5: dae09aa712aceb98ca5dc6af411840c2
+      size: 1873
+    - path: dvc_pipeline/reports/test_predictions.csv
+      hash: md5
+      md5: 460eb2c92f4b693ba60e237481d76615
+      size: 9464
+    - path: dvc_pipeline/reports/training_metrics.json
+      hash: md5
+      md5: 0a171fd055bc533f8f4696f1a4d2b4ca
+      size: 637
+  mlflow_register:
+    cmd: python dvc_pipeline/src/mlflow_register_model.py
+    deps:
+    - path: dvc_pipeline/models/final_model.joblib
+      hash: md5
+      md5: dae09aa712aceb98ca5dc6af411840c2
+      size: 1873
+    - path: dvc_pipeline/reports/test_predictions.csv
+      hash: md5
+      md5: 460eb2c92f4b693ba60e237481d76615
+      size: 9464
+    - path: dvc_pipeline/reports/training_metrics.json
+      hash: md5
+      md5: 0a171fd055bc533f8f4696f1a4d2b4ca
+      size: 637
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/mlflow_register_model.py
+      hash: md5
+      md5: ae320e1ae104219f9dff113a58bd887a
+      size: 5394
+    params:
+      params.yaml:
+        mlflow:
+          tracking_uri: file:./dvc_pipeline/mlruns
+          registry_uri: file:./dvc_pipeline/mlruns
+          experiment_name: IronOre_DVC_Pipeline
+        registry.model_name: IronOrePriceModel
+        registry.registration_output_path: 
+          dvc_pipeline/reports/registry_registration.json
+        registry.testing_alias: testing
+        registry.wait_timeout_sec: 180
+        training.metrics_path: dvc_pipeline/reports/training_metrics.json
+        training.output_model_path: dvc_pipeline/models/final_model.joblib
+        training.predictions_path: dvc_pipeline/reports/test_predictions.csv
+    outs:
+    - path: dvc_pipeline/reports/registry_registration.json
+      hash: md5
+      md5: 3e0c1022396c3df3da83f6c64d800aac
+      size: 335
+  mlflow_promote:
+    cmd: python dvc_pipeline/src/mlflow_promote_model.py
+    deps:
+    - path: dvc_pipeline/reports/registry_registration.json
+      hash: md5
+      md5: 3e0c1022396c3df3da83f6c64d800aac
+      size: 335
+    - path: dvc_pipeline/reports/test_predictions.csv
+      hash: md5
+      md5: 460eb2c92f4b693ba60e237481d76615
+      size: 9464
+    - path: dvc_pipeline/reports/training_metrics.json
+      hash: md5
+      md5: 0a171fd055bc533f8f4696f1a4d2b4ca
+      size: 637
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/mlflow_promote_model.py
+      hash: md5
+      md5: 050ea113419577c6e9f2daf99a2fc7d9
+      size: 10268
+    params:
+      params.yaml:
+        mlflow:
+          tracking_uri: file:./dvc_pipeline/mlruns
+          registry_uri: file:./dvc_pipeline/mlruns
+          experiment_name: IronOre_DVC_Pipeline
+        registry:
+          model_name: IronOrePriceModel
+          registration_output_path: 
+            dvc_pipeline/reports/registry_registration.json
+          promotion_output_path: dvc_pipeline/reports/registry_promotion.json
+          testing_alias: testing
+          staging_alias: staging
+          production_alias: production
+          wait_timeout_sec: 180
+          gates:
+            testing:
+              max_test_rmse: 0.5
+              max_test_mape: 0.01
+              min_test_r2: 0.99
+            staging:
+              max_rmse_drift_pct: 20.0
+              max_mape: 0.01
+              min_r2: 0.99
+        training.metrics_path: dvc_pipeline/reports/training_metrics.json
+        training.predictions_path: dvc_pipeline/reports/test_predictions.csv
+    outs:
+    - path: dvc_pipeline/reports/registry_promotion.json
+      hash: md5
+      md5: 64f504737d175636abc7f370d830cf32
+      size: 1356
+  deploy_production:
+    cmd: python dvc_pipeline/src/deploy_production_model.py
+    deps:
+    - path: dvc_pipeline/data/features/selected_feature_columns.json
+      hash: md5
+      md5: b87779934951259a29444b7da9151ee4
+      size: 238
+    - path: dvc_pipeline/models/final_model.joblib
+      hash: md5
+      md5: dae09aa712aceb98ca5dc6af411840c2
+      size: 1873
+    - path: dvc_pipeline/reports/registry_promotion.json
+      hash: md5
+      md5: 64f504737d175636abc7f370d830cf32
+      size: 1356
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/deploy_production_model.py
+      hash: md5
+      md5: 520324cc7c7d6d7586676b83ce0aeb5a
+      size: 2473
+    params:
+      params.yaml:
+        deployment:
+          output_dir: dvc_pipeline/deploy
+          deployed_model_path: dvc_pipeline/deploy/model.joblib
+          deployed_feature_columns_path: 
+            dvc_pipeline/deploy/feature_columns.json
+          manifest_path: dvc_pipeline/deploy/deployment_manifest.json
+        registry.promotion_output_path: 
+          dvc_pipeline/reports/registry_promotion.json
+        training.feature_columns_path: 
+          dvc_pipeline/data/features/selected_feature_columns.json
+        training.output_model_path: dvc_pipeline/models/final_model.joblib
+    outs:
+    - path: dvc_pipeline/deploy/deployment_manifest.json
+      hash: md5
+      md5: 15d7cc0fea1c5bbdc83c03a53d31c88b
+      size: 555
+    - path: dvc_pipeline/deploy/feature_columns.json
+      hash: md5
+      md5: b87779934951259a29444b7da9151ee4
+      size: 238
+    - path: dvc_pipeline/deploy/model.joblib
+      hash: md5
+      md5: dae09aa712aceb98ca5dc6af411840c2
+      size: 1873
+  feature_selection:
+    cmd: python dvc_pipeline/src/feature_selection.py
+    deps:
+    - path: dvc_pipeline/data/features/feature_columns.json
+      hash: md5
+      md5: 0bc4fa994aa28ab96578de9e78933288
+      size: 703
+    - path: dvc_pipeline/data/features/train.csv
+      hash: md5
+      md5: 556384cefa7f28bc66326c90bbb47836
+      size: 683665
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/feature_selection.py
+      hash: md5
+      md5: 932d54195b0321a73fc46508b0f82eab
+      size: 4083
+    params:
+      params.yaml:
+        feature_selection:
+          train_input_path: dvc_pipeline/data/features/train.csv
+          all_feature_columns_path: 
+            dvc_pipeline/data/features/feature_columns.json
+          selected_columns_output_path: 
+            dvc_pipeline/data/features/selected_feature_columns.json
+          report_path: dvc_pipeline/reports/feature_selection_report.json
+          target_column: Price
+          method: random_forest_importance
+          top_k: 12
+          random_state: 42
+          n_estimators: 400
+          mandatory_features:
+          - Open
+          - High
+          - Low
+          - Vol.
+          - Change %
+    outs:
+    - path: dvc_pipeline/data/features/selected_feature_columns.json
+      hash: md5
+      md5: b87779934951259a29444b7da9151ee4
+      size: 238
+    - path: dvc_pipeline/reports/feature_selection_report.json
+      hash: md5
+      md5: 96cc48f8befc9a6c68dcbbb3901849df
+      size: 780

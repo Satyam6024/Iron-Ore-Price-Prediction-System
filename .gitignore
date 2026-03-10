@@ -1,0 +1,27 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# DVC local state
+.dvc/cache/
+.dvc/tmp/
+
+# Generated pipeline artifacts
+dvc_pipeline/data/
+dvc_pipeline/models/
+dvc_pipeline/deploy/
+dvc_pipeline/reports/
+dvc_pipeline/mlruns/
+
+# Local notebook runtime files
+notebooks/.ipynb_checkpoints/

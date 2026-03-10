@@ -1,0 +1,128 @@
+stages:
+  data_ingestion:
+    cmd: python dvc_pipeline/src/data_ingestion.py
+    deps:
+      - dvc_pipeline/src/data_ingestion.py
+      - dvc_pipeline/src/common.py
+      - PYTHON_EDA_PREPROCESS_IRON_ORE/Data_set_Iron.csv
+    params:
+      - data_ingestion
+    outs:
+      - dvc_pipeline/data/raw/iron_ore_raw.csv
+    metrics:
+      - dvc_pipeline/reports/ingestion_report.json
+
+  data_cleaning:
+    cmd: python dvc_pipeline/src/data_cleaning.py
+    deps:
+      - dvc_pipeline/src/data_cleaning.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/data/raw/iron_ore_raw.csv
+    params:
+      - data_cleaning
+    outs:
+      - dvc_pipeline/data/processed/iron_ore_clean.csv
+    metrics:
+      - dvc_pipeline/reports/cleaning_report.json
+
+  feature_engineering:
+    cmd: python dvc_pipeline/src/feature_engineering.py
+    deps:
+      - dvc_pipeline/src/feature_engineering.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/data/processed/iron_ore_clean.csv
+    params:
+      - feature_engineering
+      - training.test_size
+    outs:
+      - dvc_pipeline/data/features/feature_dataset.csv
+      - dvc_pipeline/data/features/train.csv
+      - dvc_pipeline/data/features/test.csv
+      - dvc_pipeline/data/features/feature_columns.json
+    metrics:
+      - dvc_pipeline/reports/feature_report.json
+
+  feature_selection:
+    cmd: python dvc_pipeline/src/feature_selection.py
+    deps:
+      - dvc_pipeline/src/feature_selection.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/data/features/train.csv
+      - dvc_pipeline/data/features/feature_columns.json
+    params:
+      - feature_selection
+    outs:
+      - dvc_pipeline/data/features/selected_feature_columns.json
+    metrics:
+      - dvc_pipeline/reports/feature_selection_report.json
+
+  training:
+    cmd: python dvc_pipeline/src/train_model.py
+    deps:
+      - dvc_pipeline/src/train_model.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/data/features/feature_dataset.csv
+      - dvc_pipeline/data/features/train.csv
+      - dvc_pipeline/data/features/test.csv
+      - dvc_pipeline/data/features/selected_feature_columns.json
+    params:
+      - training
+    outs:
+      - dvc_pipeline/models/final_model.joblib
+      - dvc_pipeline/reports/test_predictions.csv
+    metrics:
+      - dvc_pipeline/reports/training_metrics.json
+
+  mlflow_register:
+    cmd: python dvc_pipeline/src/mlflow_register_model.py
+    deps:
+      - dvc_pipeline/src/mlflow_register_model.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/models/final_model.joblib
+      - dvc_pipeline/reports/training_metrics.json
+      - dvc_pipeline/reports/test_predictions.csv
+    params:
+      - training.output_model_path
+      - training.metrics_path
+      - training.predictions_path
+      - mlflow
+      - registry.model_name
+      - registry.registration_output_path
+      - registry.testing_alias
+      - registry.wait_timeout_sec
+    outs:
+      - dvc_pipeline/reports/registry_registration.json
+
+  mlflow_promote:
+    cmd: python dvc_pipeline/src/mlflow_promote_model.py
+    deps:
+      - dvc_pipeline/src/mlflow_promote_model.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/reports/registry_registration.json
+      - dvc_pipeline/reports/training_metrics.json
+      - dvc_pipeline/reports/test_predictions.csv
+    params:
+      - training.metrics_path
+      - training.predictions_path
+      - mlflow
+      - registry
+    outs:
+      - dvc_pipeline/reports/registry_promotion.json
+
+  deploy_production:
+    cmd: python dvc_pipeline/src/deploy_production_model.py
+    deps:
+      - dvc_pipeline/src/deploy_production_model.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/models/final_model.joblib
+      - dvc_pipeline/data/features/selected_feature_columns.json
+      - dvc_pipeline/reports/registry_promotion.json
+    params:
+      - training.output_model_path
+      - training.feature_columns_path
+      - registry.promotion_output_path
+      - deployment
+    outs:
+      - dvc_pipeline/deploy/model.joblib
+      - dvc_pipeline/deploy/feature_columns.json
+      - dvc_pipeline/deploy/deployment_manifest.json

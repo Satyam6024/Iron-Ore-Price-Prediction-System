@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY api/requirements_api.txt /tmp/requirements_api.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements_api.txt
+
+COPY api /app/api
+
+ENV MODEL_PATH=dvc_pipeline/deploy/model.joblib
+ENV FEATURE_COLUMNS_PATH=dvc_pipeline/deploy/feature_columns.json
+ENV CORS_ALLOW_ORIGINS=*
+
+EXPOSE 8000
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

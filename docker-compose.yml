@@ -1,0 +1,58 @@
+services:
+  workflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.workflow
+    container_name: iron-ore-workflow
+    working_dir: /workspace
+    command: ["python", "workflows/run_full_workflow.py"]
+    volumes:
+      - .:/workspace
+    profiles: ["workflow"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: iron-ore-backend
+    environment:
+      - MODEL_PATH=dvc_pipeline/deploy/model.joblib
+      - FEATURE_COLUMNS_PATH=dvc_pipeline/deploy/feature_columns.json
+      - CORS_ALLOW_ORIGINS=*
+    volumes:
+      - ./dvc_pipeline/deploy:/app/dvc_pipeline/deploy
+      - ./dvc_pipeline/data/features:/app/dvc_pipeline/data/features:ro
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: iron-ore-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.workflow
+    container_name: iron-ore-mlflow
+    working_dir: /workspace
+    command:
+      [
+        "mlflow",
+        "ui",
+        "--backend-store-uri",
+        "file:/workspace/dvc_pipeline/mlruns",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5000"
+      ]
+    volumes:
+      - .:/workspace
+    ports:
+      - "5000:5000"
