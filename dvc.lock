@@ -376,3 +376,77 @@ stages:
       hash: md5
       md5: 96cc48f8befc9a6c68dcbbb3901849df
       size: 780
+  research_experiments:
+    cmd: python dvc_pipeline/src/research_experiments.py
+    deps:
+    - path: dvc_pipeline/data/processed/iron_ore_clean.csv
+      hash: md5
+      md5: ef624fdf41920538c30901cff1e4c17e
+      size: 106604
+    - path: dvc_pipeline/src/common.py
+      hash: md5
+      md5: 4b00e219fda29f34f1993d0fe004914f
+      size: 3081
+    - path: dvc_pipeline/src/research_experiments.py
+      hash: md5
+      md5: 09182fd6b93c524cea016d6d8cc59ff7
+      size: 15814
+    - path: dvc_pipeline/src/research_sequence_models.py
+      hash: md5
+      md5: 6988eee4e813e5fb96e7bb23716b4b2e
+      size: 9906
+    params:
+      params.yaml:
+        research_experiments:
+          input_path: dvc_pipeline/data/processed/iron_ore_clean.csv
+          date_column: Date
+          target_column: Price
+          test_size: 252
+          lag_features:
+          - 1
+          - 2
+          - 3
+          - 5
+          - 7
+          - 14
+          - 21
+          - 30
+          arima_order:
+          - 5
+          - 1
+          - 0
+          rolling_window: 30
+          volatility_window: 14
+          high_volatility_quantile: 0.75
+          procurement_volume_tons: 10000
+          arima_lstm:
+            sequence_length: 30
+            hidden_size: 32
+            num_layers: 2
+            dropout: 0.1
+            learning_rate: 0.001
+            batch_size: 32
+            epochs: 80
+            validation_ratio: 0.15
+            patience: 12
+            history_path: dvc_pipeline/reports/arima_lstm_history.json
+          results_path: dvc_pipeline/reports/research_experiment_results.csv
+          summary_path: dvc_pipeline/reports/research_experiment_summary.json
+          predictions_path: dvc_pipeline/reports/research_predictions.csv
+    outs:
+    - path: dvc_pipeline/reports/arima_lstm_history.json
+      hash: md5
+      md5: 310fbbfe8d8026f459413f53ec5774ef
+      size: 3488
+    - path: dvc_pipeline/reports/research_experiment_results.csv
+      hash: md5
+      md5: 4db8f40550cfb9ebe4f8593cedc950ef
+      size: 1432
+    - path: dvc_pipeline/reports/research_experiment_summary.json
+      hash: md5
+      md5: a913121b1c48ea56546f3d04835be6b0
+      size: 1262
+    - path: dvc_pipeline/reports/research_predictions.csv
+      hash: md5
+      md5: f9d3581885e6137c7fc220db024d3f40
+      size: 37841

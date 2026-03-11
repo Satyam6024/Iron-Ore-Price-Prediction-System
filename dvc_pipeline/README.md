@@ -1,15 +1,16 @@
 # DVC Pipeline
 
-This pipeline is parameter-driven through `params.yaml` and has eight stages:
+This pipeline is parameter-driven through `params.yaml` and has nine stages:
 
 1. `data_ingestion`
 2. `data_cleaning`
 3. `feature_engineering`
 4. `feature_selection`
-5. `training`
-6. `mlflow_register`
-7. `mlflow_promote`
-8. `deploy_production`
+5. `research_experiments`
+6. `training`
+7. `mlflow_register`
+8. `mlflow_promote`
+9. `deploy_production`
 
 Final model output:
 
@@ -83,6 +84,9 @@ DVC will only rerun stages affected by parameter/data/script changes.
 - Cleaning report: `dvc_pipeline/reports/cleaning_report.json`
 - Feature report: `dvc_pipeline/reports/feature_report.json`
 - Feature selection report: `dvc_pipeline/reports/feature_selection_report.json`
+- Research experiment results: `dvc_pipeline/reports/research_experiment_results.csv`
+- Research experiment summary: `dvc_pipeline/reports/research_experiment_summary.json`
+- ARIMA + LSTM training history: `dvc_pipeline/reports/arima_lstm_history.json`
 - Training metrics: `dvc_pipeline/reports/training_metrics.json`
 - Test predictions: `dvc_pipeline/reports/test_predictions.csv`
 - Registry registration report: `dvc_pipeline/reports/registry_registration.json`

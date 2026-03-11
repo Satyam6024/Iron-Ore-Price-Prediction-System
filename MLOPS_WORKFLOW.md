@@ -3,19 +3,21 @@
 This project now supports the full flow you asked for:
 
 1. Run experiments
-2. Auto-select best hyperparameters
-3. Apply feature selection (top features)
-4. Update `params.yaml`
-5. Trigger DVC pipeline
-6. Train model
-7. Register model in MLflow
-8. Gate through Testing -> Staging -> Production (with rollback)
-9. Deploy production-ready model bundle
-10. Serve predictions via backend API to frontend
+2. Run paper-aligned research experiments (ARIMA, Holt-Winters, SVR, tree ensembles, ARIMA + LSTM hybrid, volatility + regime diagnostics)
+3. Auto-select best hyperparameters
+4. Apply feature selection (top features)
+5. Update `params.yaml`
+6. Trigger DVC pipeline
+7. Train model
+8. Register model in MLflow
+9. Gate through Testing -> Staging -> Production (with rollback)
+10. Deploy production-ready model bundle
+11. Serve predictions via backend API to frontend
 
 ## Architecture
 
 - Experiments script: `dvc_pipeline/src/run_experiments.py`
+- Research experiments script: `dvc_pipeline/src/research_experiments.py`
 - Params update script: `dvc_pipeline/src/update_params_from_experiments.py`
 - Orchestrator: `workflows/run_full_workflow.py`
 - DVC pipeline: `dvc.yaml`

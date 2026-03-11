@@ -56,6 +56,22 @@ stages:
     metrics:
       - dvc_pipeline/reports/feature_selection_report.json
 
+  research_experiments:
+    cmd: python dvc_pipeline/src/research_experiments.py
+    deps:
+      - dvc_pipeline/src/research_experiments.py
+      - dvc_pipeline/src/research_sequence_models.py
+      - dvc_pipeline/src/common.py
+      - dvc_pipeline/data/processed/iron_ore_clean.csv
+    params:
+      - research_experiments
+    outs:
+      - dvc_pipeline/reports/research_experiment_results.csv
+      - dvc_pipeline/reports/research_predictions.csv
+      - dvc_pipeline/reports/arima_lstm_history.json
+    metrics:
+      - dvc_pipeline/reports/research_experiment_summary.json
+
   training:
     cmd: python dvc_pipeline/src/train_model.py
     deps:

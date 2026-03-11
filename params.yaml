@@ -78,6 +78,42 @@ experiments:
   mlflow_experiment_name: IronOre_Experiments
   results_path: dvc_pipeline/reports/experiment_results.csv
   best_result_path: dvc_pipeline/reports/best_experiment.json
+research_experiments:
+  input_path: dvc_pipeline/data/processed/iron_ore_clean.csv
+  date_column: Date
+  target_column: Price
+  test_size: 252
+  lag_features:
+  - 1
+  - 2
+  - 3
+  - 5
+  - 7
+  - 14
+  - 21
+  - 30
+  arima_order:
+  - 5
+  - 1
+  - 0
+  rolling_window: 30
+  volatility_window: 14
+  high_volatility_quantile: 0.75
+  procurement_volume_tons: 10000
+  arima_lstm:
+    sequence_length: 30
+    hidden_size: 32
+    num_layers: 2
+    dropout: 0.1
+    learning_rate: 0.001
+    batch_size: 32
+    epochs: 80
+    validation_ratio: 0.15
+    patience: 12
+    history_path: dvc_pipeline/reports/arima_lstm_history.json
+  results_path: dvc_pipeline/reports/research_experiment_results.csv
+  summary_path: dvc_pipeline/reports/research_experiment_summary.json
+  predictions_path: dvc_pipeline/reports/research_predictions.csv
 workflow:
   params_update_report_path: dvc_pipeline/reports/params_update_report.json
 mlflow:
